@@ -18,7 +18,7 @@ def main(args_=None):
     f = open(args.config)
     c = json.load(f)
  
-    gui = Gui(c["vm"], c["user"], c["pw"], c["input"], c["output"], c["outputHost"], c["snapshot"])
+    gui = Gui(c)
     gui.start()
 
 if __name__ == "__main__":

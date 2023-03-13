@@ -7,7 +7,7 @@ from autoappanalysis.cmd.HostCommand import HostCommand
 
 class Gui():
     def __init__(self, config) -> None:
-
+        self.config = config
         # Tk window
         self.root = Tk()
         self.root.title('AutoAppAnalysis')
@@ -149,6 +149,7 @@ class Gui():
             analysisVm.executeWithParams(py, cmd)
 
         print("\n --> Decryption finished \n")
+ 
 
     def _analyseSnapshots(self):
         vm = self.vmTxt.get("1.0", "end-1c")
@@ -159,22 +160,31 @@ class Gui():
         snapshots = self._getSnapshotList()
         outputHost = self.hOutputTxt.get("1.0", "end-1c")
 
-        init = ""
+        print(snapshots)
+
         py = "/usr/bin/python3"
         dfxml = "/home/" + user + "/scripts/dfxml_python/dfxml/bin/idifference2.py"
-        
-        for snapshot in snapshots:
-            if("init" in snapshot):
-                init = snapshot
 
-        for snapshot in snapshots:
-            if("init" not in snapshot):
-                before = decryptedDir + "/" + init + ".raw"
-                after = decryptedDir + "/" + snapshot + ".raw"
-                target = outputHost + "\\ge\\" + snapshot + ".idiff"
-                cmd = py + " " + dfxml + " " + before + " " + after + " > " + target
-                analysisVm = Vm(vm, user, pw)
-                result = analysisVm.executeWithParams(py, cmd)
+        for comparison in self.config["comparison"]:
+            resultPath = outputHost + "\\actions\\" + comparison["name"] 
+            firstSnapshot = comparison["first"]
+            secondSnapshots = comparison["second"]
+
+            if(not os.path.isdir(resultPath)):
+                os.mkdir(resultPath)
+                os.mkdir(resultPath + "\\ge")
+
+            for snapshotName in secondSnapshots:
+                snList = [i for i in snapshots if snapshotName in i]
+                for snapshot in snList:
+                    before = decryptedDir + "/" + firstSnapshot + ".1.raw"
+                    after = decryptedDir + "/" + snapshot + ".raw"
+                    target = resultPath + "\\ge\\" + snapshot + ".idiff"
+                    cmd = py + " " + dfxml + " " + before + " " + after + " > " + target
+                    print(cmd)
+                    analysisVm = Vm(vm, user, pw)
+                    analysisVm.executeWithParams(py, cmd)
+                
 
         print("\n --> Analysis finished \n")
 

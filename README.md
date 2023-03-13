@@ -21,16 +21,19 @@ Create a config file like the following schema:
   "outputHost": "C:\\Users\\admin\\results",                   // Path to result shared folder on host
   "snapshot": "C:\\Users\\admin\\.android\\avd\\analysis.avd", // Path to AVD shared folder on host
   "comparison": [                                              // Array of objects to provide different 
-        {                                                      // comparison setup.
-            "first": "init",                                   // Each object holds a starting snapshot 
-            "second": ["install", "noise"]                     // (first) to which the other snapshots
+        {                                                      // comparison setup. 
+            "name": "01_action_install",                       // Each object holds a comparison name,        
+            "first": "init",                                   // a starting snapshot (first) 
+            "second": ["install", "noise"]                     // to which the other snapshots
         },                                                     // (second) will be compared against
         {
-            "fist": "install",
+            "name": "02_action_first_start",
+            "first": "install",
             "second": ["first_start"]
         },
         {
-            "fist": "first_start",
+            "name": "03_action_guest_login",
+            "first": "first_start",
             "second": ["continue_as_guest"]
         }
   ],

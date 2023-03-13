@@ -17,7 +17,7 @@ class Gui():
         frameLeft = Frame(self.root)
         frameLeft.grid(row=0, column=0, padx=10, pady=10)
         frameLeftBottom = Frame(self.root)
-        frameLeftBottom.grid(row=1, column=0, padx=10, pady=0)
+        frameLeftBottom.grid(row=1, column=0, padx=10, pady=5)
         frameRight = Frame(self.root)
         frameRight.grid(row=0, column=1, padx=10, pady=10)
         frameRightBottom = Frame(self.root)
@@ -27,11 +27,15 @@ class Gui():
     #    self.rootBtn = Button(frameRight, text="Root", command=self._rootAVD)
     #    self.rootBtn.grid(row=0, column=0, pady=2, sticky="w")
         self.createBtn = Button(frameRight, text="Create Snapshot", command=self._createSnapshot)
-        self.createBtn.grid(row=2, column=0, pady=2, sticky="w")
+        self.createBtn.grid(row=1, column=0, pady=2, sticky="w")
         self.decryptBtn = Button(frameRight, text="Decrypt Snapshots", command=self._decryptSnapshots)
-        self.decryptBtn.grid(row=4, column=0, pady=2, sticky="w")
-        self.analyseBtn = Button(frameRight, text="Analyse Snapshots", command=self._analyseSnapshots)
-        self.analyseBtn.grid(row=5, column=0, pady=2, sticky="w")
+        self.decryptBtn.grid(row=2, column=0, pady=2, sticky="w")
+        self.createIdiffBtn = Button(frameRight, text="Create .idiff", command=self._createIdiff)
+        self.createIdiffBtn.grid(row=3, column=0, pady=2, sticky="w")
+        self.analyseIdiffBtn = Button(frameRight, text="Analyse .idiff", command=self._analyseIdiff)
+        self.analyseIdiffBtn.grid(row=4, column=0, pady=2, sticky="w")
+        self.analyseDbBtn = Button(frameRight, text="Analyse .db", command=self._analyseDb)
+        self.analyseDbBtn.grid(row=5, column=0, pady=2, sticky="w")
         
         self.extractBtn = Button(frameRightBottom, text="Extract Files", command=self.extractFiles)
         self.extractBtn.grid(row=0, column=0, pady=2, sticky="w")
@@ -151,7 +155,7 @@ class Gui():
         print("\n --> Decryption finished \n")
  
 
-    def _analyseSnapshots(self):
+    def _createIdiff(self):
         vm = self.vmTxt.get("1.0", "end-1c")
         user = self.userTxt.get("1.0", "end-1c")
         pw = self.pwTxt.get("1.0", "end-1c")
@@ -160,7 +164,7 @@ class Gui():
         snapshots = self._getSnapshotList()
         outputHost = self.hOutputTxt.get("1.0", "end-1c")
 
-        print(snapshots)
+        print("\n --> Processing with idifference2.py \n")
 
         py = "/usr/bin/python3"
         dfxml = "/home/" + user + "/scripts/dfxml_python/dfxml/bin/idifference2.py"
@@ -184,9 +188,28 @@ class Gui():
                     print(cmd)
                     analysisVm = Vm(vm, user, pw)
                     analysisVm.executeWithParams(py, cmd)
-                
 
-        print("\n --> Analysis finished \n")
+        print("\n --> *.idiff created \n")
+
+    def _analyseIdiff(self):
+        vm = self.vmTxt.get("1.0", "end-1c")
+        user = self.userTxt.get("1.0", "end-1c")
+        pw = self.pwTxt.get("1.0", "end-1c")
+        outputDir = self.outputTxt.get("1.0", "end-1c")
+        actionsDir = self.hOutputTxt.get("1.0", "end-1c") + "\\" + "actions"
+        py = "/usr/bin/python3"
+        evidence = "-m evidence"
+        
+        for dir in os.listdir(actionsDir):
+            argsP = "-p " + outputDir + "/actions/" + dir + "/ge" 
+            argsO = "-o " + outputDir + "/actions/" + dir
+            cmd = py + " " + evidence + argsP + " "
+            print(cmd)
+            #analysisVm = Vm(vm, user, pw)
+            #analysisVm.executeWithParams(py, cmd)
+
+    def _analyseDb(self):
+        print("Analyse .db")
 
 
     def _processSnapshots(self):

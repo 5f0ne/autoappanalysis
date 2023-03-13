@@ -57,8 +57,10 @@ Create a config file like the following schema:
 | Button | Description |
 | --- | ---|
 | Create Snapshot | Create a AVD Snapshot with `Snapshot Name` and `Snapshot Number` and extract all files given by `AVD Files to be extracted` |
-| Decrypt Snapshots | Decrypts all snapshots in `VM Input Directory` |
-| Analyse Snapshots | Analyses all snapshots in `VM Input Directory + /decrypted` as well as all `AVD Files to be extracted` based on given comparison rules in config.json |
+| Decrypt Snapshots | Decrypts all snapshots in `VM Input Directory` and save the `.raw` in `VM Output Directory + /decrypted` |
+| Create .idiff | Creates `.idiff` files from the given comparison in config.json and save them in `VM Output Directory + /actions` |
+| Analyse .idiff | Analyses all `.idiff` in `VM Output Directory + /actions` |
+| Analyse .db | Analyse all `AVD Files to be extracted` sqlite databases based on given comparison rules in config.json |
 | Extract Files | Extract all files given by `AVD Files to be extracted` |
 
 

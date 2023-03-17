@@ -24,8 +24,8 @@ class Gui():
         frameRightBottom.grid(row=1, column=1, padx=10, pady=0)
 
         # Button
-    #    self.rootBtn = Button(frameRight, text="Root", command=self._rootAVD)
-    #    self.rootBtn.grid(row=0, column=0, pady=2, sticky="w")
+        self.rootBtn = Button(frameRight, text="Root", command=self._rootAVD)
+        self.rootBtn.grid(row=0, column=0, pady=2, sticky="w")
         self.createBtn = Button(frameRight, text="Create Snapshot", command=self._createSnapshot)
         self.createBtn.grid(row=1, column=0, pady=2, sticky="w")
         self.decryptBtn = Button(frameRight, text="Decrypt Snapshots", command=self._decryptSnapshots)
@@ -37,7 +37,7 @@ class Gui():
         self.analyseDbBtn = Button(frameRight, text="Analyse .db", command=self._analyseDb)
         self.analyseDbBtn.grid(row=5, column=0, pady=2, sticky="w")
         
-        self.extractBtn = Button(frameRightBottom, text="Extract Files", command=self.extractFiles)
+        self.extractBtn = Button(frameRightBottom, text="Extract Files", command=self._extractFiles)
         self.extractBtn.grid(row=0, column=0, pady=2, sticky="w")
 
         # Text
@@ -106,18 +106,28 @@ class Gui():
     def _rootAVD(self):
         cmd = HostCommand.ADB_ROOT
         print(cmd)
+        cmdResult = os.popen(cmd).read()
+        print(cmdResult)
 
-    def extractFiles(self):
+    def _extractFiles(self):
         outputHost = self.hOutputTxt.get("1.0", "end-1c")
         sName = self.sNameTxt.get("1.0", "end-1c")
         sNumber = self.sNumberTxt.get("1.0", "end-1c")
         paths_ = self.extFilesTxt.get("1.0", "end-1c")
         files = paths_.split("\n")
         hostPath = outputHost + "\\files\\" + sName + "." + sNumber
+
+        if(not os.path.isdir(hostPath)):
+            os.mkdir(hostPath)
+
         for file in files: 
             if(file != ""):
-                cmd = HostCommand.ADB_PULL.substitute(androidPath=file, hostPath=hostPath)
+                fileName = file.strip('/').strip('\\').split('/')[-1].split('\\')[-1]
+                destPath = hostPath + "\\" + fileName
+                cmd = HostCommand.ADB_PULL.substitute(androidPath=file, hostPath=destPath)
                 print(cmd)
+                cmdResult = os.popen(cmd).read()
+                print(cmdResult)
 
     def _createSnapshot(self):
         name_ = self.sNameTxt.get("1.0", "end-1c")
@@ -126,6 +136,7 @@ class Gui():
         print(cmd)
         cmdResult = os.popen(cmd).read()
         print(cmdResult)
+        self._extractFiles()
 
     def _getSnapshotList(self):
         snapshots = []

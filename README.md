@@ -23,18 +23,21 @@ Create a config file like the following schema:
   "comparison": [                                              // Array of objects to provide different 
         {                                                      // comparison setup. 
             "name": "01_action_install",                       // Each object holds a comparison name,        
-            "first": "init",                                   // a starting snapshot (first) 
-            "second": ["install", "noise"]                     // to which the other snapshots
-        },                                                     // (second) will be compared against
+            "first": "init",                                   // a starting snapshot (first) to which the other 
+            "second": ["install"],                             // snapshots (second) will be compared against
+            "noise": "noise"                                   // name of the noise snapshot
+        },                                                      
         {
             "name": "02_action_first_start",
             "first": "install",
-            "second": ["first_start"]
+            "second": ["first_start"],
+            "noise": "noise_install"
         },
         {
             "name": "03_action_guest_login",
             "first": "first_start",
-            "second": ["continue_as_guest"]
+            "second": ["continue_as_guest"],
+            "noise": "noise_first_start"
         }
   ],
   "files": [                                                  // Full Paths to files which are going to be

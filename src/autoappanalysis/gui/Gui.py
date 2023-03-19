@@ -1,4 +1,5 @@
 import os
+import glob
 
 from tkinter import *
 
@@ -18,10 +19,14 @@ class Gui():
         frameLeft.grid(row=0, column=0, padx=10, pady=10)
         frameLeftBottom = Frame(self.root)
         frameLeftBottom.grid(row=1, column=0, padx=10, pady=5)
+        frameLeftBottom2 = Frame(self.root)
+        frameLeftBottom2.grid(row=2, column=0, padx=10, pady=5)
         frameRight = Frame(self.root)
         frameRight.grid(row=0, column=1, padx=10, pady=10)
         frameRightBottom = Frame(self.root)
         frameRightBottom.grid(row=1, column=1, padx=10, pady=0)
+        frameRightBottom2 = Frame(self.root)
+        frameRightBottom2.grid(row=2, column=1, padx=10, pady=0)
 
         # Button
         self.rootBtn = Button(frameRight, text="Root", command=self._rootAVD)
@@ -39,6 +44,8 @@ class Gui():
         
         self.extractBtn = Button(frameRightBottom, text="Extract Files", command=self._extractFiles)
         self.extractBtn.grid(row=0, column=0, pady=2, sticky="w")
+        self.searchBtn = Button(frameRightBottom2, text="Search Files", command=self._searchFiles)
+        self.searchBtn.grid(row=0, column=0, pady=2, sticky="w")
 
         # Text
         self.labelVm = Label(frameLeft, text='VM Name:')
@@ -102,6 +109,14 @@ class Gui():
         for file in config["files"]:
             self.extFilesTxt.insert(END, file + "\n")
         self.extFilesTxt.grid(row=7, column=0)
+
+        self.labelSearchFiles = Label(frameLeftBottom2, text='Files to be searched:')
+        self.labelSearchFiles.grid(row=6, column=0, sticky="w")
+        self.searchFilesTxt = Text(frameLeftBottom2, height = 15, width = 60)
+
+        for file in config["search"]["files"]:
+            self.searchFilesTxt.insert(END, file + "\n")
+        self.searchFilesTxt.grid(row=7, column=0)
 
     def _rootAVD(self):
         cmd = HostCommand.ADB_ROOT
@@ -184,13 +199,15 @@ class Gui():
             resultPath = outputHost + "\\actions\\" + comparison["name"] 
             firstSnapshot = comparison["first"]
             secondSnapshots = comparison["second"]
+            noise = comparison["noise"]
 
             if(not os.path.isdir(resultPath)):
                 os.mkdir(resultPath)
                 os.mkdir(resultPath + "\\ge")
 
+            # Compare Snapshots
             for snapshotName in secondSnapshots:
-                snList = [i for i in snapshots if snapshotName in i]
+                snList = [i for i in snapshots if snapshotName == i.split(".")[0]]
                 for snapshot in snList:
                     before = decryptedDir + "/" + firstSnapshot + ".1.raw"
                     after = decryptedDir + "/" + snapshot + ".raw"
@@ -199,6 +216,16 @@ class Gui():
                     print(cmd)
                     analysisVm = Vm(vm, user, pw)
                     analysisVm.executeWithParams(py, cmd)
+
+            # Compare Noise
+            before = decryptedDir + "/" + firstSnapshot + ".1.raw"
+            after = decryptedDir + "/" + noise + ".1.raw"
+            target = resultPath + "\\ge\\" + noise + ".1.idiff"
+            cmd = py + " " + dfxml + " " + before + " " + after + " > " + target
+            print(cmd)
+            analysisVm = Vm(vm, user, pw)
+            analysisVm.executeWithParams(py, cmd)
+
 
         print("\n --> *.idiff created \n")
 
@@ -212,19 +239,62 @@ class Gui():
         evidence = "-m evidence"
         
         for dir in os.listdir(actionsDir):
+            noiseName = ""
+            for c in self.config["comparison"]:
+                if(c["name"] == dir):
+                    noiseName = c["noise"]
             argsP = "-p " + outputDir + "/actions/" + dir + "/ge" 
-            argsO = "-o " + outputDir + "/actions/" + dir
-            cmd = py + " " + evidence + argsP + " "
+            argsO = "-o " + outputDir + "/actions/" + dir + "/output"
+            argsN = "-n " + noiseName
+            cmd = py + " " + evidence + " " + argsP + " " + argsO + " " + argsN
             print(cmd)
-            #analysisVm = Vm(vm, user, pw)
-            #analysisVm.executeWithParams(py, cmd)
+
+            if(not os.path.isdir(outputDir + "/actions/" + dir + "/output")):
+                os.mkdir(actionsDir + "\\" + dir + "\\output")
+
+            analysisVm = Vm(vm, user, pw)
+            analysisVm.executeWithParams(py, cmd)
 
     def _analyseDb(self):
         print("Analyse .db")
 
+    def _searchFiles(self):
+        vm = self.vmTxt.get("1.0", "end-1c")
+        user = self.userTxt.get("1.0", "end-1c")
+        pw = self.pwTxt.get("1.0", "end-1c")
+        outputDir = self.outputTxt.get("1.0", "end-1c")
+        actionsDir = self.hOutputTxt.get("1.0", "end-1c") + "\\" + "actions"
+        py = "/usr/bin/python3"
+        lineident = "-m lineident"
+        paths_ = self.searchFilesTxt.get("1.0", "end-1c")
+        files = paths_.split("\n")
+
+        for file in files:
+            globedFiles = glob.glob(file)
+            for f in globedFiles:
+                path = self._winPathToLinPath(f)
+                argsP = "-p " + path
+                for searchAction in self.config["search"]["actions"]:
+                    argsM = "-m " + searchAction["method"] 
+                    argsW = "-w " + searchAction["words"]
+                    out = "> " + f + "." + searchAction["name"].replace(" ", "_") + ".lineident.txt"
+                    cmd = py + " " + lineident + " " + argsP + " " + argsM + " " + argsW + " " + out
+                    print(cmd)
+                    analysisVm = Vm(vm, user, pw)
+                    analysisVm.executeWithParams(py, cmd)
+                print("---")
+                
+
+        print("\n --> Files searched! \n")
+
 
     def _processSnapshots(self):
       pass
+
+    def _winPathToLinPath(self, winPath):
+        outputDir = self.outputTxt.get("1.0", "end-1c")
+        linPath = winPath.rsplit("results")[1].replace("\\", "/")
+        return outputDir + linPath
 
     def start(self):
         self.root.mainloop()

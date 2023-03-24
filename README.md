@@ -13,6 +13,7 @@ Create a config file like the following schema:
 ```json
 // config.json
 {
+  "log": "autoappanalysis.log",                                // Path to log file
   "vm": "app-vm",                                              // Name of the VM
   "user": "admin",                                             // User Name 
   "pw": "admin",                                               // Password

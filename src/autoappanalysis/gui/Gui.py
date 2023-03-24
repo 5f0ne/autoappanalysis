@@ -3,12 +3,15 @@ import glob
 
 from tkinter import *
 
-from autoappanalysis.model.Vm import Vm
+from autoappanalysis.processor.Processor import Processor
+
 from autoappanalysis.cmd.HostCommand import HostCommand
+from autoappanalysis.cmd.VirtualBoxCommand import VirtualBoxCommand
 
 class Gui():
     def __init__(self, config) -> None:
         self.config = config
+        self.processor = Processor(config["log"])
         # Tk window
         self.root = Tk()
         self.root.title('AutoAppAnalysis')
@@ -120,8 +123,7 @@ class Gui():
 
     def _rootAVD(self):
         cmd = HostCommand.ADB_ROOT
-        print(cmd)
-        cmdResult = os.popen(cmd).read()
+        cmdResult = self.processor.process(cmd)
         print(cmdResult)
 
     def _extractFiles(self):
@@ -140,19 +142,20 @@ class Gui():
                 fileName = file.strip('/').strip('\\').split('/')[-1].split('\\')[-1]
                 destPath = hostPath + "\\" + fileName
                 cmd = HostCommand.ADB_PULL.substitute(androidPath=file, hostPath=destPath)
-                print(cmd)
-                cmdResult = os.popen(cmd).read()
+                cmdResult = self.processor.process(cmd)
                 print(cmdResult)
 
     def _createSnapshot(self):
         name_ = self.sNameTxt.get("1.0", "end-1c")
         number = self.sNumberTxt.get("1.0", "end-1c")
+        self.processor.logInfo("--> Snapshot Creation started!")
+
         cmd = HostCommand.ADB_SNAPSHOT_SAVE.substitute(name=name_ + "." + number)
-        print(cmd)
-        cmdResult = os.popen(cmd).read()
+        cmdResult = self.processor.process(cmd)
         print(cmdResult)
         self._extractFiles()
 
+        self.processor.logInfo("--> Snapshot Creation finished!")
         print("\n --> Snapshot created \n")
 
     def _getSnapshotList(self):
@@ -173,27 +176,30 @@ class Gui():
         outputHost = self.hOutputTxt.get("1.0", "end-1c") + "\\decrypted"
         snapshots = self._getSnapshotList()
 
+        self.processor.logInfo("--> Snapshot Decryption started!")
         for snapshot in snapshots:
             fullPath = outputHost + "\\" + snapshot + ".raw"
             if(os.path.isfile(fullPath) == False):
                 py = "/usr/bin/python3"
                 avdecrypt = "/home/" + user + "/scripts/avdecrypt/avdecrypt.py"
                 params = "-a " + avdPath + " -s " + snapshot + " -o " + outputDir
-                cmd = py + " " + avdecrypt + " " + params
-                print(cmd)
-                analysisVm = Vm(vm, user, pw)
-                analysisVm.executeWithParams(py, cmd)
-            else:
-                print(fullPath + " allready decrypted!")
+                args = py + " " + avdecrypt + " " + params
 
+                cmd = VirtualBoxCommand.GUEST_CONTROL_PARAM.substitute(vmName=vm, user=user, pw=pw, path=py, args=args)
+                self.processor.logInfo("Decrypt " + snapshot)
+                cmdResult = self.processor.process(cmd)
+                print(cmdResult)
+            else:
+                self.processor.logWarn(fullPath + " already decrypted!")
 
         for path, dirs, files in os.walk(outputHost, topdown=False):
             for file in files:
                 if(".enc" in file):
                     fileToBeRemoved = os.path.join(path, file)
                     os.remove(fileToBeRemoved)
-                    print(fileToBeRemoved + " removed successfully!")
+                    self.processor.logInfo(fileToBeRemoved + " removed successfully!")
 
+        self.processor.logInfo("--> Snapshot Decryption finished!")
         print("\n --> Decryption finished \n")
  
 
@@ -206,7 +212,8 @@ class Gui():
         snapshots = self._getSnapshotList()
         outputHost = self.hOutputTxt.get("1.0", "end-1c")
 
-        print("\n --> Processing with idifference2.py \n")
+        print("\n --> .idiff Creation started! \n")
+        self.processor.logInfo("--> .idiff Creation started!")
 
         py = "/usr/bin/python3"
         dfxml = "/home/" + user + "/scripts/dfxml_python/dfxml/bin/idifference2.py"
@@ -228,21 +235,21 @@ class Gui():
                     before = decryptedDir + "/" + firstSnapshot + ".1.raw"
                     after = decryptedDir + "/" + snapshot + ".raw"
                     target = resultPath + "\\ge\\" + snapshot + ".idiff"
-                    cmd = py + " " + dfxml + " " + before + " " + after + " > " + target
-                    print(cmd)
-                    analysisVm = Vm(vm, user, pw)
-                    analysisVm.executeWithParams(py, cmd)
+                    args = py + " " + dfxml + " " + before + " " + after + " > " + target
+                    cmd = VirtualBoxCommand.GUEST_CONTROL_PARAM.substitute(vmName=vm, user=user, pw=pw, path=py, args=args)
+                    cmdResult = self.processor.process(cmd)
+                    print(cmdResult)
 
             # Compare Noise
             before = decryptedDir + "/" + firstSnapshot + ".1.raw"
             after = decryptedDir + "/" + noise + ".1.raw"
             target = resultPath + "\\ge\\" + noise + ".1.idiff"
-            cmd = py + " " + dfxml + " " + before + " " + after + " > " + target
-            print(cmd)
-            analysisVm = Vm(vm, user, pw)
-            analysisVm.executeWithParams(py, cmd)
-
-
+            args = py + " " + dfxml + " " + before + " " + after + " > " + target
+            cmd = VirtualBoxCommand.GUEST_CONTROL_PARAM.substitute(vmName=vm, user=user, pw=pw, path=py, args=args)
+            cmdResult = self.processor.process(cmd)
+            print(cmdResult)
+        
+        self.processor.logInfo("--> .idiff Creation finished!")
         print("\n --> *.idiff created \n")
 
     def _analyseIdiff(self):
@@ -254,6 +261,8 @@ class Gui():
         py = "/usr/bin/python3"
         evidence = "-m evidence"
         
+        self.processor.logInfo("--> .idiff Analysis started!")
+        print("\n --> .idiff Analysis started! \n")
         for dir in os.listdir(actionsDir):
             noiseName = ""
             for c in self.config["comparison"]:
@@ -262,15 +271,18 @@ class Gui():
             argsP = "-p " + outputDir + "/actions/" + dir + "/ge" 
             argsO = "-o " + outputDir + "/actions/" + dir + "/output"
             argsN = "-n " + noiseName
-            cmd = py + " " + evidence + " " + argsP + " " + argsO + " " + argsN
-            print(cmd)
+            args = py + " " + evidence + " " + argsP + " " + argsO + " " + argsN
 
-            if(not os.path.isdir(outputDir + "/actions/" + dir + "/output")):
+            if(not os.path.isdir(actionsDir + "\\" + dir + "\\output")):
                 os.mkdir(actionsDir + "\\" + dir + "\\output")
 
-            analysisVm = Vm(vm, user, pw)
-            analysisVm.executeWithParams(py, cmd)
+            cmd = VirtualBoxCommand.GUEST_CONTROL_PARAM.substitute(vmName=vm, user=user, pw=pw, path=py, args=args)
+            cmdResult = self.processor.process(cmd)
+            print(cmdResult)
 
+        self.processor.logInfo("--> .idiff Analysis finished!")
+        print("\n --> *.idiff Analysis finsihed! \n")
+            
     def _analyseDb(self):
         print("Analyse .db")
 
@@ -285,6 +297,8 @@ class Gui():
         paths_ = self.searchFilesTxt.get("1.0", "end-1c")
         files = paths_.split("\n")
 
+        self.processor.logInfo("--> Keyword Search started!")
+        print("\n --> Keyword Search started! \n")
         for file in files:
             globedFiles = glob.glob(file)
             for f in globedFiles:
@@ -294,14 +308,15 @@ class Gui():
                     argsM = "-m " + searchAction["method"] 
                     argsW = "-w " + searchAction["words"]
                     out = "> " + f + "." + searchAction["name"].replace(" ", "_") + ".lineident.txt"
-                    cmd = py + " " + lineident + " " + argsP + " " + argsM + " " + argsW + " " + out
-                    print(cmd)
-                    analysisVm = Vm(vm, user, pw)
-                    analysisVm.executeWithParams(py, cmd)
+                    args = py + " " + lineident + " " + argsP + " " + argsM + " " + argsW + " " + out
+                    cmd = VirtualBoxCommand.GUEST_CONTROL_PARAM.substitute(vmName=vm, user=user, pw=pw, path=py, args=args)
+                    cmdResult = self.processor.process(cmd)
+                    print(cmdResult)
                 print("---")
                 
 
-        print("\n --> Files searched! \n")
+        self.processor.logInfo("--> Keyword Search finished!")
+        print("\n --> Keyword Search finished! \n")
 
 
     def _processSnapshots(self):

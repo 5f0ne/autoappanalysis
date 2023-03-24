@@ -93,7 +93,7 @@ class Gui():
         self.labelSName = Label(frameLeft, text='Snapshot Name:')
         self.labelSName.grid(row=4, column=1, sticky="w")
         self.sNameTxt = Text(frameLeft, height = 1, width = 20)
-        self.sNameTxt.insert('1.0', "snapshot")
+        self.sNameTxt.insert('1.0', "snap")
         self.sNameTxt.grid(row=5, column=1)
 
         self.labelSNumber = Label(frameLeft, text='Snapshot Number:')
@@ -153,6 +153,8 @@ class Gui():
         print(cmdResult)
         self._extractFiles()
 
+        print("\n --> Snapshot created \n")
+
     def _getSnapshotList(self):
         snapshots = []
         avdDir = self.avdPathTxt.get("1.0", "end-1c")
@@ -168,15 +170,29 @@ class Gui():
         pw = self.pwTxt.get("1.0", "end-1c")
         avdPath = self.inputTxt.get("1.0", "end-1c")
         outputDir = self.outputTxt.get("1.0", "end-1c") + "/decrypted"
+        outputHost = self.hOutputTxt.get("1.0", "end-1c") + "\\decrypted"
         snapshots = self._getSnapshotList()
 
         for snapshot in snapshots:
-            py = "/usr/bin/python3"
-            avdecrypt = "/home/" + user + "/scripts/avdecrypt/avdecrypt.py"
-            params = "-a " + avdPath + " -s " + snapshot + " -o " + outputDir
-            cmd = py + " " + avdecrypt + " " + params
-            analysisVm = Vm(vm, user, pw)
-            analysisVm.executeWithParams(py, cmd)
+            fullPath = outputHost + "\\" + snapshot + ".raw"
+            if(os.path.isfile(fullPath) == False):
+                py = "/usr/bin/python3"
+                avdecrypt = "/home/" + user + "/scripts/avdecrypt/avdecrypt.py"
+                params = "-a " + avdPath + " -s " + snapshot + " -o " + outputDir
+                cmd = py + " " + avdecrypt + " " + params
+                print(cmd)
+                analysisVm = Vm(vm, user, pw)
+                analysisVm.executeWithParams(py, cmd)
+            else:
+                print(fullPath + " allready decrypted!")
+
+
+        for path, dirs, files in os.walk(outputHost, topdown=False):
+            for file in files:
+                if(".enc" in file):
+                    fileToBeRemoved = os.path.join(path, file)
+                    os.remove(fileToBeRemoved)
+                    print(fileToBeRemoved + " removed successfully!")
 
         print("\n --> Decryption finished \n")
  

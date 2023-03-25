@@ -2,7 +2,6 @@ import sys
 import json
 import argparse
 
-from autoappanalysis.model.Vm import Vm
 from autoappanalysis.gui.Gui import Gui
 
 def main(args_=None):

@@ -281,10 +281,67 @@ class Gui():
             print(cmdResult)
 
         self.processor.logInfo("--> .idiff Analysis finished!")
-        print("\n --> *.idiff Analysis finsihed! \n")
+        print("\n --> *.idiff Analysis finished! \n")
             
     def _analyseDb(self):
-        print("Analyse .db")
+        vm = self.vmTxt.get("1.0", "end-1c")
+        user = self.userTxt.get("1.0", "end-1c")
+        pw = self.pwTxt.get("1.0", "end-1c")
+        outputDir = self.outputTxt.get("1.0", "end-1c")
+        outputHost = self.hOutputTxt.get("1.0", "end-1c")
+        paths_ = self.extFilesTxt.get("1.0", "end-1c")
+        files_ = paths_.split("\n")
+        hostPath = outputHost + "\\files\\"
+        py = "/usr/bin/python3"
+        sqlitediff = "-m sqlitediff"
+
+        self.processor.logInfo("--> .db Analysis started!")
+        print("\n --> .db Analysis started! \n")
+
+        for comparison in self.config["comparison"]:
+            firstSnapshot = comparison["first"]
+            secondSnapshots = comparison["second"]
+
+            for file_ in files_:
+                if(file_ != ""):
+                    fileName = self._getFileName(file_)
+                    if(".db" in fileName):
+
+                        firstSnapshotFullPath = hostPath + firstSnapshot + ".1" + "\\" + fileName
+
+                        for sSnap in secondSnapshots:
+                            sSnapPath = hostPath + sSnap + ".1" + "\\"
+                            sSnapFullPath = sSnapPath + fileName
+                            bPath = self._winPathToLinPath(firstSnapshotFullPath)
+                            aPath = self._winPathToLinPath(sSnapFullPath)
+                            bPathIsFile = False
+                            aPathIsFile = False
+                            if(os.path.isfile(firstSnapshotFullPath)):
+                                bPathIsFile = True
+                            if(os.path.isfile(sSnapFullPath)):
+                                aPathIsFile = True
+
+                            if(bPathIsFile and aPathIsFile):
+                                argsb = "-b " + bPath
+                                argsa = "-a " + aPath
+                                args = py + " " + sqlitediff + " " + argsb + " " + argsa + " > " + sSnapPath + firstSnapshot + "." + sSnap + "." + fileName + ".sqlitediff"
+                                cmd = VirtualBoxCommand.GUEST_CONTROL_PARAM.substitute(vmName=vm, user=user, pw=pw, path=py, args=args)
+                                cmdResult = self.processor.process(cmd)
+                                print(cmdResult)
+                            elif(bPathIsFile and not aPathIsFile):
+                                self.processor.logWarn(bPath + " available (before) | " + aPath + " not available (after)")
+                            elif(aPathIsFile and not bPathIsFile):
+                                self.processor.logWarn(bPath + " not available (before) | " + aPath + " available (after)")
+                            elif(not aPathIsFile and not bPathIsFile):
+                                self.processor.logWarn("no .db file found")
+
+
+        self.processor.logInfo("--> .db Analysis finished!")
+        print("\n --> *.db Analysis finished! \n")
+
+        
+
+        
 
     def _searchFiles(self):
         vm = self.vmTxt.get("1.0", "end-1c")
@@ -318,6 +375,8 @@ class Gui():
         self.processor.logInfo("--> Keyword Search finished!")
         print("\n --> Keyword Search finished! \n")
 
+    def _getFileName(self, path):
+        return path.strip('/').strip('\\').split('/')[-1].split('\\')[-1]
 
     def _processSnapshots(self):
       pass

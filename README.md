@@ -8,7 +8,7 @@ Automation GUI for Android App Analysis
 
 # Usage
 
-Create a config file like the following schema:
+Create a config file with the following schema:
 
 ```json
 // config.json

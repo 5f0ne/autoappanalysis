@@ -54,12 +54,14 @@ Create a config file with the following schema:
             {                                               // applied to each files listed before
                 "name": "All Occurences",
                 "method": "or",
-                "words": "appname"
+                "words": "appname",
+                "format": "ol"
             },
             {
                 "name": "Interesting FileTypes",
                 "method": "or",
-                "words": ".db,.json,.xml,.yml"
+                "words": ".db,.json,.xml,.yml",
+                "format": "ol"
             }
         ]
   }

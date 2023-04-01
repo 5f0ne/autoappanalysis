@@ -339,10 +339,6 @@ class Gui():
         self.processor.logInfo("--> .db Analysis finished!")
         print("\n --> *.db Analysis finished! \n")
 
-        
-
-        
-
     def _searchFiles(self):
         vm = self.vmTxt.get("1.0", "end-1c")
         user = self.userTxt.get("1.0", "end-1c")
@@ -364,8 +360,9 @@ class Gui():
                 for searchAction in self.config["search"]["actions"]:
                     argsM = "-m " + searchAction["method"] 
                     argsW = "-w " + searchAction["words"]
+                    argsF = "-f " + searchAction["format"]
                     out = "> " + f + "." + searchAction["name"].replace(" ", "_") + ".lineident.txt"
-                    args = py + " " + lineident + " " + argsP + " " + argsM + " " + argsW + " " + out
+                    args = py + " " + lineident + " " + argsP + " " + argsM + " " + argsW + " " + argsF + " " + out
                     cmd = VirtualBoxCommand.GUEST_CONTROL_PARAM.substitute(vmName=vm, user=user, pw=pw, path=py, args=args)
                     cmdResult = self.processor.process(cmd)
                     print(cmdResult)

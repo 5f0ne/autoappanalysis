@@ -44,6 +44,8 @@ class Gui():
         self.analyseIdiffBtn.grid(row=4, column=0, pady=2, sticky="w")
         self.analyseDbBtn = Button(frameRight, text="Analyse .db", command=self._analyseDb)
         self.analyseDbBtn.grid(row=5, column=0, pady=2, sticky="w")
+        self.uninstallBtn = Button(frameRight, text="Uninstall", command=self._uninstall)
+        self.uninstallBtn.grid(row=6, column=0, pady=2, sticky="w")
         
         self.extractBtn = Button(frameRightBottom, text="Extract Files", command=self._extractFiles)
         self.extractBtn.grid(row=0, column=0, pady=2, sticky="w")
@@ -104,6 +106,12 @@ class Gui():
         self.sNumberTxt = Text(frameLeft, height = 1, width = 20)
         self.sNumberTxt.insert('1.0', "1")
         self.sNumberTxt.grid(row=5, column=2)
+
+        self.labelPkgName = Label(frameLeft, text='App Package Name:')
+        self.labelPkgName.grid(row=6, column=0, sticky="w")
+        self.pkgNameTxt = Text(frameLeft, height = 1, width = 20)
+        self.pkgNameTxt.insert('1.0', config["pkgName"])
+        self.pkgNameTxt.grid(row=7, column=0)
 
         self.labelExtractFiles = Label(frameLeftBottom, text='AVD Files to be extracted:')
         self.labelExtractFiles.grid(row=6, column=0, sticky="w")
@@ -338,6 +346,17 @@ class Gui():
 
         self.processor.logInfo("--> .db Analysis finished!")
         print("\n --> *.db Analysis finished! \n")
+
+    def _uninstall(self):
+        pkgName = self.pkgNameTxt.get("1.0", "end-1c")
+        self.processor.logInfo("--> Uninstall started!")
+
+        cmd = HostCommand.ADB_UNINSTALL.substitute(packageName=pkgName)
+        cmdResult = self.processor.process(cmd)
+        print(cmdResult)
+
+        self.processor.logInfo("--> Uninstall finished!")
+
 
     def _searchFiles(self):
         vm = self.vmTxt.get("1.0", "end-1c")

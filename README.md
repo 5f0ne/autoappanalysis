@@ -14,6 +14,7 @@ Create a config file with the following schema:
 // config.json
 {
   "log": "autoappanalysis.log",                                // Path to log file
+  "pkgName": "com.app",                                        // Package Name
   "vm": "app-vm",                                              // Name of the VM
   "user": "admin",                                             // User Name 
   "pw": "admin",                                               // Password
@@ -74,7 +75,7 @@ Create a config file with the following schema:
 `python -m autoappanalysis -c config.json`
 
 
-![](img/01.jpg)
+![](img/01.png)
 
 
 | Button | Description |
@@ -85,6 +86,7 @@ Create a config file with the following schema:
 | Create .idiff | Creates `.idiff` files from the given comparison in config.json and save them in `VM Output Directory + /actions` |
 | Analyse .idiff | Analyses all `.idiff` in `VM Output Directory + /actions` and save the results there |
 | Analyse .db | Analyse all `AVD Files to be extracted` sqlite databases based on given comparison rules in config.json |
+| Uninstall | Uninstalls the App given by `App Package Name` |
 | Extract Files | Extract all files given by `AVD Files to be extracted`. In order to work, `Root` button need to be pushed first. |
 | Search Files | Search given files by provided config and save results within the given paths |
 

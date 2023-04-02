@@ -5,7 +5,7 @@ with open("README.md", "r") as r:
 
 setup(
     name="autoappanalysis",             # This name is used in: pip install hello-world
-    version="2.0.0",
+    version="2.0.1",
     author="5f0",
     url="https://github.com/5f0ne/autoappanalysis",
     description="Automation GUI for Android App Analysis",

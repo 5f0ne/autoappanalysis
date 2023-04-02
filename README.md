@@ -56,13 +56,13 @@ Create a config file with the following schema:
                 "name": "All Occurences",
                 "method": "or",
                 "words": "appname",
-                "format": "ol"
+                "format": "wln"
             },
             {
                 "name": "Interesting FileTypes",
                 "method": "or",
                 "words": ".db,.json,.xml,.yml",
-                "format": "ol"
+                "format": "wln"
             }
         ]
   }

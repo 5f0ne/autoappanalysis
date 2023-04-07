@@ -302,10 +302,26 @@ class Gui():
         hostPath = outputHost + "\\files\\"
         py = "/usr/bin/python3"
         sqlitediff = "-m sqlitediff"
+        sqliteview = "-m sqliteview"
 
         self.processor.logInfo("--> .db Analysis started!")
         print("\n --> .db Analysis started! \n")
 
+        # SQLite View
+        for path, dirs, files in os.walk(hostPath):
+            for file in files:
+                fName = self._getFileName(file)
+                parts = fName.split(".")
+                if(parts[-1] == "db"):
+                    p = os.path.join(path, file)
+                    target = p + ".sqliteview"
+                    argsP = "-p " + self._winPathToLinPath(p)
+                    args = py + " " + sqliteview + " " + argsP + " > " + target
+                    cmd = VirtualBoxCommand.GUEST_CONTROL_PARAM.substitute(vmName=vm, user=user, pw=pw, path=py, args=args)
+                    cmdResult = self.processor.process(cmd)
+                    print(cmdResult)
+
+        # SQLite Diff
         for comparison in self.config["comparison"]:
             firstSnapshot = comparison["first"]
             secondSnapshots = comparison["second"]
@@ -314,7 +330,7 @@ class Gui():
                 if(file_ != ""):
                     fileName = self._getFileName(file_)
                     if(".db" in fileName):
-
+                          
                         firstSnapshotFullPath = hostPath + firstSnapshot + ".1" + "\\" + fileName
 
                         for sSnap in secondSnapshots:
